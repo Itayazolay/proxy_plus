@@ -12,6 +12,7 @@ async def validate_echo(host, port, size=10):
     writer.write(msg)
     assert await reader.readexactly(len(msg)) == msg
 
+
 async def concurrent_validate_echo(host, port):
     await asyncio.gather(*[validate_echo(host, port, size=1024 * i)
                            for i in range(0, 20, 2)])
