@@ -3,6 +3,7 @@
 
 """Tests for `proxy_plus` package."""
 import asyncio
+import socket
 
 import pytest
 
@@ -25,8 +26,14 @@ def event_loop():
 
 
 @pytest.fixture
-def free_port(unused_tcp_port_factory):
-    return unused_tcp_port_factory
+def free_port():
+    def get_port():
+        s=socket.socket()
+        s.bind(("", 0))
+        port = s.getsockname()[1]
+        s.close()
+        return port
+    return get_port
 
 
 @pytest.fixture
