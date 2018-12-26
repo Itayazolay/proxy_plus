@@ -7,7 +7,7 @@ loop = asyncio.get_event_loop()
 @pytest.mark.asyncio
 class TestForwarder:
     @pytest.mark.parametrize("size", [1024, 1024 * 1024, 1024 * 1024 * 50])
-    async def test_large_data(self, proxy, size):
+    async def test_large_data(self, proxy, size, echo_tester):
         reader, writer, _ = proxy
         msg = b"A" * size
         writer.write(msg)
