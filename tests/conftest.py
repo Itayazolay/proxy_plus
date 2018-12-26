@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from proxy_plus import proxy_plus, PortForwarding
+from proxy_plus import PortForwarding
 
 loop = asyncio.get_event_loop()
 

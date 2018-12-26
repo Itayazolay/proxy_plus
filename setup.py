@@ -11,11 +11,9 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=6.0', ]
+requirements = open("requirements.txt").readlines()
 
-setup_requirements = ['pytest-runner', ]
-
-test_requirements = ['pytest', ]
+test_requirements = open("requirements_dev.txt").readlines()
 
 setup(
     author="Itay Azolay",
@@ -25,11 +23,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
@@ -46,7 +40,6 @@ setup(
     keywords='proxy_plus',
     name='proxy_plus',
     packages=find_packages(include=['proxy_plus']),
-    setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/itayazolay/proxy_plus',
