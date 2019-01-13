@@ -1,6 +1,8 @@
 import asyncio
-import socks5
 import errno
+import typing
+
+import socks5
 
 from proxy_plus.forwarder import Proxy
 
@@ -12,51 +14,58 @@ FAILURES = {
 
 
 class Socks5Server(asyncio.Protocol):
-    def __init__(self, create_connection=None) -> None:
+    """Socks5 server protocol implementation."""
+
+    def __init__(self, create_connection: typing.Coroutine = None, loop: asyncio.AbstractEventLoop = None) -> None:
+        """
+
+        :param create_connection:
+        """
         super().__init__()
         self.transport = None
-        self._loop = asyncio.get_event_loop()
+        self._loop = loop or asyncio.get_event_loop()
         self._cc = create_connection or self._loop.create_connection
         self._conn = socks5.Connection(our_role="server")
         self._event = None
-        self._greeting = socks5.GreetingRequest(socks5.AUTH_TYPE["NO_AUTH"])
 
     def data_received(self, data):
         super().data_received(data)
         self._event = self._conn.recv(data)
-        if type(self._event) == socks5.NeedMoreData:
+        if isinstance(self._event, socks5.NeedMoreData):
             return
-        elif type(self._event) is socks5.GreetingRequest:
+        elif isinstance(self._event, socks5.GreetingRequest):
             event = socks5.GreetingResponse(socks5.AUTH_TYPE["NO_AUTH"])
             self.transport.write(self._conn.send(event))
-        elif type(self._event) is socks5.Request:
+        elif isinstance(self._event, socks5.Request):
             self.transport.pause_reading()
-            self._loop.call_soon(self._connect(self._event))
-        else:
-            pass  # WHOT
+            self._loop.create_task(self._handle_socks5_req(self._event))
+        else: # Whot tf happened
+            self.transport.close()
 
-    async def _connect(self, event):
-        ip, port = str(event.addr), event.port
+    async def _handle_socks5_req(self, req: socks5.Request):
+        if req.cmd == socks5.REQ_COMMAND["CONNECT"]:
+            await self._connect(req)
+        else:
+            resp = socks5.Response(socks5.RESP_STATUS["COMMAND_NOT_SUPPORTED"], req.atyp, req.addr, req.port)
+            self.transport.write(self._conn.send(resp))
+
+    async def _connect(self, req: socks5.Request):
+        addr, port = str(req.addr), req.port
         try:
-            trans, proto = await self._loop.create_connection(
-                Proxy(self.transport),
-                ip, port)
+            trans, _ = await self._loop.create_connection(
+                lambda: Proxy(self.transport),
+                addr, port)
             response = socks5.Response(socks5.RESP_STATUS["SUCCESS"],
-                                       event.atyp, event.addr, event.port)
+                                       req.atyp, req.addr, req.port)
             self.transport.set_protocol(Proxy(trans))
             self.transport.write(self._conn.send(response))
             self.transport.resume_reading()
         except OSError as err:
-            reason = FAILURES.get(err.errno,
-                                  socks5.RESP_STATUS["GENRAL_FAILURE"])
-            response = socks5.Response(reason,
-                                       event.atyp, event.addr, event.port)
+            reason = FAILURES.get(err.errno, socks5.RESP_STATUS["GENRAL_FAILURE"])
+            response = socks5.Response(reason, req.atyp, req.addr, req.port)
             self.transport.write(self._conn.send(response))
             self.transport.send_eof()
             self.transport.close()
-
-    def eof_received(self):
-        super().eof_received()
 
     def connection_made(self, transport):
         super().connection_made(transport)

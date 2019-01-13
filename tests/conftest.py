@@ -9,7 +9,6 @@ import pytest
 
 from proxy_plus import PortForwarding
 
-loop = asyncio.get_event_loop()
 
 
 class EchoServer(asyncio.Protocol):
@@ -23,8 +22,11 @@ class EchoServer(asyncio.Protocol):
 @pytest.fixture
 def event_loop():
     loop = asyncio.get_event_loop()
-    yield loop
+    return loop
 
+@pytest.fixture
+def loop(event_loop):
+    return event_loop
 
 @pytest.fixture
 def free_bind():
@@ -39,7 +41,7 @@ def free_bind():
 
 
 @pytest.fixture
-async def echo_server(free_bind):
+async def echo_server(free_bind, loop):
     addr = free_bind()
     server = await loop.create_server(EchoServer, *addr)
     yield addr
@@ -47,7 +49,7 @@ async def echo_server(free_bind):
 
 
 @pytest.fixture
-async def proxy(echo_server, free_bind):
+async def proxy(echo_server, free_bind, loop):
     addr = free_bind()
     proto = PortForwarding(echo_server, loop.create_connection)
     server = await loop.create_server(lambda: proto, *addr)
