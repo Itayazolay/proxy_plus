@@ -5,6 +5,10 @@ logger = logging.getLogger(__name__)
 
 
 class Proxy(asyncio.Protocol):
+    """
+    TCP Proxy protocol. Exposing events on one transport to the other.
+    Only one direction.
+    """
     def __init__(self, remote: asyncio.Transport):
         self.remote = remote
         self.transport = None

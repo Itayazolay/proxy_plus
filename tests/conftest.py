@@ -73,6 +73,14 @@ async def echo_tester():
 
 async def validate_echo(host, port, size=10):
     reader, writer = await asyncio.open_connection(host, port)
+    await _rw_echo(reader, writer, size)
+
+
+async def _rw_echo(reader, writer, size=10):
     msg = b"A" * size
     writer.write(msg)
     assert await reader.readexactly(len(msg)) == msg
+
+@pytest.fixture
+def rw_echo():
+    return _rw_echo

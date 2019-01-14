@@ -41,6 +41,7 @@ async def connected_echo(greeted, echo_server, s_client):
     r, w = greeted
     req = socks5.Request(socks5.REQ_COMMAND["CONNECT"], socks5.ADDR_TYPE["IPV4"], *echo_server)
     w.write(s_client.send(req))
+    s_client.recv(await r.read(1024))
     return r, w
 
 @pytest.mark.asyncio
@@ -56,3 +57,8 @@ class TestSocks:
         w.write(s_client.send(req))
         resp = s_client.recv(await r.read(1024))
         assert resp.status == socks5.RESP_STATUS["SUCCESS"]
+
+    @pytest.mark.parametrize("size", [10, 1000, 100000])
+    async def test_socks5_connect(self, connected_echo, rw_echo, size):
+        r, w = connected_echo
+        await rw_echo(r, w, size=size)

@@ -16,6 +16,7 @@ class PortForwarding(asyncio.Protocol):
         self._remote_proxy = None
 
     def connection_made(self, transport: asyncio.Transport):
+        """Client connected - connect to remote."""
         self.transport = transport
         self.transport.pause_reading()
         self._proxy = Proxy(self.transport)
@@ -35,11 +36,13 @@ class PortForwarding(asyncio.Protocol):
             proxy.data_received(self._buffer)
 
     def connection_lost(self, exc):
+        """Client disconnected, cancel task if needed."""
         if self.task:
             self.task.cancel()
         self.transport.close()
 
     def data_received(self, data):
+        """Handle buffer-pause reading doesn't completly prevent data receive."""
         self._buffer += data
 
 

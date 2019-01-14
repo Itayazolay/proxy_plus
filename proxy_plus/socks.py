@@ -18,8 +18,8 @@ class Socks5Server(asyncio.Protocol):
 
     def __init__(self, create_connection: typing.Coroutine = None, loop: asyncio.AbstractEventLoop = None) -> None:
         """
-
-        :param create_connection:
+        Initialized Socks Connection(single).
+        :param create_connection: create connection to use on connect.
         """
         super().__init__()
         self.transport = None
@@ -29,10 +29,11 @@ class Socks5Server(asyncio.Protocol):
         self._event = None
 
     def data_received(self, data):
+        """Handling data from client - implementing the protocol and states."""
         super().data_received(data)
         self._event = self._conn.recv(data)
         if isinstance(self._event, socks5.NeedMoreData):
-            return
+            pass
         elif isinstance(self._event, socks5.GreetingRequest):
             event = socks5.GreetingResponse(socks5.AUTH_TYPE["NO_AUTH"])
             self.transport.write(self._conn.send(event))
@@ -46,7 +47,8 @@ class Socks5Server(asyncio.Protocol):
         if req.cmd == socks5.REQ_COMMAND["CONNECT"]:
             await self._connect(req)
         else:
-            resp = socks5.Response(socks5.RESP_STATUS["COMMAND_NOT_SUPPORTED"], req.atyp, req.addr, req.port)
+            resp = socks5.Response(socks5.RESP_STATUS["COMMAND_NOT_SUPPORTED"],
+                                   req.atyp, req.addr, req.port)
             self.transport.write(self._conn.send(resp))
 
     async def _connect(self, req: socks5.Request):
@@ -68,6 +70,7 @@ class Socks5Server(asyncio.Protocol):
             self.transport.close()
 
     def connection_made(self, transport):
+        """Client connected. """
         super().connection_made(transport)
         self.transport = transport
         self._conn.initiate_connection()
