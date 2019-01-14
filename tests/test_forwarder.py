@@ -1,9 +1,6 @@
 import asyncio
 import pytest
 
-loop = asyncio.get_event_loop()
-
-
 @pytest.mark.asyncio
 class TestForwarder:
     @pytest.mark.parametrize("size", [1024, 1024 * 1024, 1024 * 1024 * 50])

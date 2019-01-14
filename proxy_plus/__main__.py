@@ -2,10 +2,19 @@
 
 """Console script for proxy_plus."""
 import sys
-import click
-import asyncio
-import proxy_plus
 import signal
+import asyncio
+import warnings
+
+import click
+import proxy_plus
+
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ImportError:
+    warnings.warn("uvloop is not installed and is recommended for enhanced performance")
+
 
 loop = asyncio.get_event_loop()
 
@@ -21,7 +30,14 @@ def main(args=None):
 @click.option("--rhost")
 @click.option("--rport")
 def lpf(lhost, lport, rhost, rport):
+    """
+    Listen-Connect proxy(local port forwarding).
 
+    :param lhost: Local host to bind on.
+    :param lport: Local port to bind on.
+    :param rhost: Remote host to connect to.
+    :param rport: Remote port to connect to.
+    """
     loop.run_until_complete(
         proxy_plus.start_local_port_forwarding(
             (lhost, lport), loop.create_connection,
@@ -34,16 +50,11 @@ def lpf(lhost, lport, rhost, rport):
         loop.close()
     return 0
 
-@click.command()
-@click.option('-s', '--string-to-echo', 'string')
-def echo(string):
-    click.echo(string)
 
 if __name__ == "__main__":
     for signame in ('SIGINT', 'SIGTERM'):
 
         signal.signal(getattr(signal, signame),
-                    lambda a: loop.stop())
-    main.add_command(echo)
+                      lambda a: loop.stop())
     main.add_command(lpf)
     sys.exit(main())  # pragma: no cover

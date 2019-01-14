@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Top-level package for Proxy Plus."""
+"""Proxy Plus. Advanced Proxy implementation using python asyncio framework. """
 
 __author__ = """Itay Azolay"""
 __email__ = 'itayazolay@gmail.com'
